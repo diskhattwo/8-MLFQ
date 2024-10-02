@@ -1,0 +1,690 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>8: Multi-level Feedback Queue</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(255, 255, 255);
+		background-color: #272727;
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 3px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+    margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-block;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1.25em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(55, 53, 47, 1);
+}
+.highlight-gray {
+	color: rgba(120, 119, 116, 1);
+	fill: rgba(120, 119, 116, 1);
+}
+.highlight-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.highlight-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.highlight-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.highlight-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.highlight-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(212, 76, 71, 1);
+	fill: rgba(212, 76, 71, 1);
+}
+.highlight-default_background {
+	color: rgba(217, 115, 13, 1);
+}
+.highlight-gray_background {
+	background: rgba(241, 241, 239, 1);
+}
+.highlight-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.highlight-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.highlight-yellow_background {
+	background: rgba(251, 237, 214, 1);
+}
+.highlight-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.highlight-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.highlight-purple_background {
+	background: rgba(244, 240, 247, 0.8);
+}
+.highlight-pink_background {
+	background: rgba(249, 238, 243, 0.8);
+}
+.highlight-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(120, 119, 116, 1);
+	fill: rgba(120, 119, 116, 1);
+}
+.block-color-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.block-color-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.block-color-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.block-color-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.block-color-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(212, 76, 71, 1);
+	fill: rgba(212, 76, 71, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(241, 241, 239, 1);
+}
+.block-color-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.block-color-yellow_background {
+	background: rgba(251, 237, 214, 1);
+}
+.block-color-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.block-color-purple_background {
+	background: rgba(244, 240, 247, 0.8);
+}
+.block-color-pink_background {
+	background: rgba(249, 238, 243, 0.8);
+}
+.block-color-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.select-value-color-uiBlue { background-color: rgba(35, 131, 226, .07); }
+.select-value-color-pink { background-color: rgba(245, 224, 233, 1); }
+.select-value-color-purple { background-color: rgba(232, 222, 238, 1); }
+.select-value-color-green { background-color: rgba(219, 237, 219, 1); }
+.select-value-color-gray { background-color: rgba(227, 226, 224, 1); }
+.select-value-color-transparentGray { background-color: rgba(227, 226, 224, 0); }
+.select-value-color-translucentGray { background-color: rgba(0, 0, 0, 0.06); }
+.select-value-color-orange { background-color: rgba(250, 222, 201, 1); }
+.select-value-color-brown { background-color: rgba(238, 224, 218, 1); }
+.select-value-color-red { background-color: rgba(255, 226, 221, 1); }
+.select-value-color-yellow { background-color: rgba(249, 228, 188, 1); }
+.select-value-color-blue { background-color: rgba(211, 229, 239, 1); }
+.select-value-color-pageGlass { background-color: undefined; }
+.select-value-color-washGlass { background-color: undefined; }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="508b5e30-39ae-4ca8-a6de-dfd7e9d7041b" class="page mono"><header><img class="page-cover-image" src="https://wallpapers.com/images/hd/coding-background-9izlympnd0ovmpli.jpg" style="object-position:center 89.27000000000001%"/><h1 class="page-title">8: Multi-level Feedback Queue</h1><p class="page-description"></p></header><div class="page-body"><hr id="11299b07-15e3-80ab-90b1-cf31970171e1"/><p id="11299b07-15e3-80b0-b6ed-ec56425d12e7" class="">en este cap se van a ver los problemas ocurridos en el desarrollo de multi-level feedback queue, cola multinivel retroalimentada, <mark class="highlight-orange"><mark class="highlight-default_background">mlfq</mark></mark>.</p><p id="11299b07-15e3-80ac-be54-d0dbe2e5c51c" class="">el problema fundamental que <mark class="highlight-orange">mlfq</mark> intenta abordar se divide en dos:</p><ul id="11299b07-15e3-8003-97ff-f964ed6ea4c6" class="bulleted-list"><li style="list-style-type:disc">primero, estaría bueno optimizar el tiempo de entrega, que como se vio en el cap anterior, esto se logra mejor con <strong>sjb</strong>, shortest job first. pero bueno el OS no sabe cuanto tiempo necesita cada trabajo.</li></ul><ul id="11299b07-15e3-8007-a9d6-e82ca85ce596" class="bulleted-list"><li style="list-style-type:disc">segundo, <mark class="highlight-orange">mlfq</mark> busca hacer que un sistema se sienta responsive para usuarios interactivos, y así minimizar el tiempo de respuesta. pero algoritmos como <strong>round robin</strong>, si bien reducen el tiempo de respuesta, es horrible para tiempos de entrega.</li></ul><p id="11299b07-15e3-8005-ae15-e5296e6a4354" class="">el problema general entonces es: dado que no sabemos nada del proceso, cómo hacer para optimizar tiempo de entrega y minimizar tiempo de respuesta?</p><h2 id="11299b07-15e3-808f-aec7-e4620642a1b3" class="">8.1: reglas básicas</h2><hr id="11299b07-15e3-802e-9aa9-f3fc3961b1c8"/><p id="11299b07-15e3-8085-a148-cffc53e3b6b9" class="">en este cap se va a describir los algoritmos básicos detras del <mark class="highlight-orange">mlfq</mark>.</p><p id="11299b07-15e3-801d-b2e8-d41ffc1ce6ad" class="">en resumen, <mark class="highlight-orange">mlfq</mark> tiene un numero de <strong>colas</strong>, cada una con diferente <strong>nivel de prioridad.</strong></p><p id="11299b07-15e3-80f5-872b-dbbbdb67da14" class="">los trabajos con major prioridad (en la cola mas alta) es elegido para runear primero.</p><p id="11299b07-15e3-8044-a7dd-ecfafbf9c12f" class="">obvio que mas de un trabajo puede estar en la misma queue, y así tener la misma prioridad, en esos casos, se va a utilizar <strong>rr</strong>.</p><p id="11399b07-15e3-8065-9473-fc45b4089839" class="">
+</p><p id="11299b07-15e3-80d2-9b7d-d9f2018102c6" class="">de esta forma se llega a las primeras dos reglas basicas de <mark class="highlight-orange">mlfq</mark>:</p><ul id="11299b07-15e3-8081-8be9-eacf8cbf5bfb" class="bulleted-list"><li style="list-style-type:disc"><span style="border-bottom:0.05em solid">regla 1</span>: si priority(A) &gt; priority(B), A corre, B no.</li></ul><ul id="11299b07-15e3-80df-b43a-e89919e509bb" class="bulleted-list"><li style="list-style-type:disc"><span style="border-bottom:0.05em solid">regla 2</span>: si priority(A) = priority(B), A y B corren en <strong>rr</strong>.</li></ul><p id="11399b07-15e3-80ae-9d56-c52c2d71bea2" class="">
+</p><p id="11299b07-15e3-8060-926c-c5f7c1ec85fe" class="">igualmente, el punto del planificador <mark class="highlight-orange">mlfq </mark>es cómo setea las prioridades: en vez de dejarle a cada trabajo una prioridad fija, <mark class="highlight-orange">mlfq </mark>varía la prioridad de cada trabajo segun como se comportan, si por ejemplo un trabajo necesita dejar la cpu mientras espera por un input del teclado, <mark class="highlight-orange">mlfq </mark>va a mantener su prioridad en alto, ya que así es como se debería comportar un proceso interactivo.</p><p id="11299b07-15e3-8051-b5dc-fc5dc1664d6e" class="">si por otro lado el trabajo utiliza la cpu por un gran periodo de tiempo, <mark class="highlight-orange">mlfq </mark>va a reducir su prioridad. así es como <mark class="highlight-orange">mlfq </mark>aprende de los procesos mientras corren y puede de esta forma predecir el futuro.</p><figure id="11299b07-15e3-8057-b12f-c8b512c8c6fd" class="image"><a href="image.png"><img style="width:336px" src="image.png"/></a></figure><p id="11299b07-15e3-80a7-a306-dfd4edfd179c" class="">de esta forma se podría imaginar al <mark class="highlight-orange">mlfq</mark>:<mark class="highlight-orange"> </mark>acá, siendo Qn las colas de prioridad, dos trabajos A y B tienen la prioridad más alta, C tiene una prioridad media y D la prioridad mas baja.</p><p id="11299b07-15e3-80d9-974f-d94340de6977" class="">ahora la cosa es entender cómo las prioridades cambian con el tiempo:</p><h2 id="11299b07-15e3-802f-9926-cd4037be3a38" class="">8.2: intento #1; como cambiar la prioridad</h2><hr id="11299b07-15e3-8040-a188-cc54318fa2f4"/><p id="11299b07-15e3-80d5-9d51-f0106909a488" class="">acá se tiene que decidir cómo <mark class="highlight-orange">mlfq </mark>va a cambiar el nivel de prioridad del trabajo, para hacer esto, hay que tener en cuenta la carga de trabajo: varios trabajos cortos que son interactivos y varios otros largos que son cpu-bound pero que el tiempo de respuesta no es importante.</p><p id="11299b07-15e3-80d1-8254-f62c4010d34a" class="">para esto se va a tener en cuenta algo llamado <strong>tiempo de asignación</strong>, el cual es el tiempo que el trabajo puede quedarse en un nivel de prioridad hasta que el planificador lo baja de prioridad.</p><ul id="11299b07-15e3-80bc-87f6-f90b03c99d0f" class="bulleted-list"><li style="list-style-type:disc"><span style="border-bottom:0.05em solid">regla 3</span>: cuando un trabajo llega al sistema, tiene la maxima prioridad.</li></ul><ul id="11299b07-15e3-80bc-b354-f84f10b9dcc5" class="bulleted-list"><li style="list-style-type:disc"><span style="border-bottom:0.05em solid">regla 4a</span>: si el trabajo usa todo su tiempo de asignación, su prioridad se reduce.</li></ul><ul id="11299b07-15e3-8033-8d9b-ede3878dda10" class="bulleted-list"><li style="list-style-type:disc"><span style="border-bottom:0.05em solid">regla 4b</span>: si un trabajo deja la CPU antes de se acabe su tiempo de asignación, se queda en el mismo nivel de prioridad (su tiempo de asignación se resetea).</li></ul><h3 id="11299b07-15e3-806b-9cb5-db28a58241d5" class="">ejemplo 1: un solo trabajo largo (con mucho uso de cpu)</h3><figure id="11299b07-15e3-8045-a780-fba718d7da67" class="image"><a href="image%201.png"><img style="width:401px" src="image%201.png"/></a></figure><p id="11299b07-15e3-80d8-8285-c32a132cc82d" class="">el trabajo dura 200 ms y va bajando de prioridad cada 10 ms fin</p><h3 id="11299b07-15e3-803f-876d-c0a6a5fd9f8b" class="">ejemplo 2: ahora con un trabajo corto</h3><figure id="11299b07-15e3-80fa-b1de-dc5b825bd77e" class="image"><a href="image%202.png"><img style="width:516px" src="image%202.png"/></a></figure><p id="11299b07-15e3-8037-bc7f-f7c2e73403d6" class="">izquierda: aca hay dos trabajos, A que es largo y negro y B que es corto y gris. A se va ejecutando en la prioridad mas baja. B llega en t = 100, entonces se mete en la cola mas alta, esto quiere decir que A va a esperar a que B se termine de ejecutar para seguir. como B solamente necesita ejecutarse por 20ms, ni siquiera llega a la cola mas baja.</p><h3 id="11399b07-15e3-8060-a840-f8577583cb78" class="">ejemplo 3: que pasa con las I/O?</h3><p id="11399b07-15e3-80e3-9e12-d5c89e8b83e3" class="">como dice la regla 4b, si un proceso deja la cpu antes de finalizar el tiempo de asignación, queda en el mismo nivel de prioridad.</p><p id="11399b07-15e3-80d0-8585-f58f421cc379" class="">en el ejemplo de la derecha de la figura 8.3 muestra un ejemplo de esto, el proceso B en gris necesita la cpu solamente por 1ms antes de un I/O mientras el proceso A es CPU-bound.</p><p id="11399b07-15e3-8003-8a74-f11793f9d01c" class="">entonces si B es un proceso interactivo, <mark class="highlight-orange">mlfq</mark> va a buscar que se complete mas rapidamente.</p><h3 id="11399b07-15e3-8095-bbb7-e00173a63457" class="">problemas con nuestro <mark class="highlight-orange">mlfq</mark> actual</h3><p id="11399b07-15e3-8017-95b7-e08f4d3116d6" class="">hay varios problemas con esta implementación de <mark class="highlight-orange">mlfq</mark>:<div class="indented"><p id="11399b07-15e3-8083-93f1-eb5944f73f57" class="">primero, si hay muchos procesos interactivos, estos van a consumir todo el tiempo de CPU, entonces los procesos que son CPU-bound no van a recibir el tiempo de CPU necesario para ellos, se cagan de hambre.</p><p id="11399b07-15e3-8089-9c15-e40e3a5e7ff0" class="">segundo, este algoritmo es bastante susceptible al siguiente ataque: antes de agotar el tiempo de asignación, crea una operación I/O, para dejar la CPU. como esto hace que el proceso permanezca en la misma cola de prioridad, este va a ganar mucho tiempo de la CPU. si se hace bien, el trabajo puede monopolizar la CPU. a esto le voy a llamar <mark class="highlight-red">gaming</mark></p><p id="11399b07-15e3-808e-8c59-f4cb28d0179e" class="">finalmente, un programa puede cambiar su comportamiento en cualquier momento. un trabajo que fue CPU-bound puede cambiar a una fase de interactividad. ese trabajo se caga ya que no se va a poder tratar como un trabajo interactivo.</p></div></p><h2 id="11399b07-15e3-8058-b114-fc6b89e2aec9" class="">8.3: intento #2; el boosteo (impulso) de prioridad</h2><hr id="11399b07-15e3-8080-9d02-e4c329d26629"/><p id="11399b07-15e3-8063-960d-efd3bd08455b" class="">vamos a cambiar algunas reglas. la idea es que periodicamente se impulse la prioridad de todos los trabajos del sistema. hay muchas formas de hacer esto, pero lo vamos a hacer de esta forma:</p><ul id="11399b07-15e3-8055-825a-f3be641714d9" class="bulleted-list"><li style="list-style-type:disc"><span style="border-bottom:0.05em solid">regla 5</span>: despues de un periodo de tiempo S, mover todos los trabajos a la prioridad mas alta.</li></ul><p id="11399b07-15e3-8066-858f-cb5ad0da6ab1" class="">esta regla resuelve dos problemas de una:<div class="indented"><p id="11399b07-15e3-80bb-a0c6-c1e91264d54c" class="">primero, nuestros procesos estan asegurados de que no se van a cagar de hambre.</p><p id="11399b07-15e3-80d5-8fc9-c4c6013df758" class="">segundo, si un trabajo CPU-bound se vuelve interactivo, el planificador lo va a poder tratar como uno.</p></div></p><figure id="11399b07-15e3-807f-9a10-e929f0d4df17" class="image"><a href="image%203.png"><img style="width:604px" src="image%203.png"/></a></figure><p id="11399b07-15e3-8054-9601-e95a65ae03f8" class="">en el ejemplo de la izquierda, se ve un trabajo A CPU-bound que se caga de hambre a los 100ms, ya que llegan otros trabajos que son I/O, entonces el trabajo A nunca termina de ejecutarse.</p><p id="11399b07-15e3-800e-83c1-de5c32b5a16f" class="">en el de la derecha, los mismos trabajos, pero con un boost de prioridad a los 100ms. de esta forma el trabajo A se asegura de acabar.</p><p id="11399b07-15e3-8048-8687-dc4b76f052f3" class="">pero que valor debería tomar S? se le dice constante vudú porque se necesita magia negra para setear esta constante correctamente.</p><p id="11399b07-15e3-80f1-b2af-c189ed89b4e1" class="">lo que pasa es que si se setea con un valor muy alto, los trabajos CPU-bound se pueden cagar de hambre, si se setea con un valor bajo, los I/O no van a tener el tiempo de CPU que necesitan.</p><h2 id="11399b07-15e3-8073-a0ab-ce2312b7ade2" class="">8.4: intento #3, mejor contabilidad</h2><hr id="11399b07-15e3-80ed-8446-d8597c3aef13"/><p id="11399b07-15e3-80ff-b60b-dbee9a649470" class="">hay otro problema a resolver, como prevenimos que alguien pueda hacer <mark class="highlight-red">gaming</mark> a nuestro planificador? los culpables acá son las reglas 4a y 4b, ya que estos son los que retienen la prioridad de los trabajos. qué hacemos entonces?</p><p id="11399b07-15e3-80a3-b759-cd51c53ea6af" class="">la solución es mejorar la contabilidad del tiempo de CPU en cada nivel de prioridad. en vez de resetear el tiempo de asignación que usó un proceso antes de hacer un I/O, el planificador debería guardarlo.</p><p id="11399b07-15e3-80ce-95b7-c45bb45ce478" class="">una vez que un proceso usa su tiempo de asignación, debe bajar su nivel de prioridad, independientemente de si usó su tiempo de asignación en un tiempo prolongado o en varios cortos. entonces se reescriben las reglas 4a y 4b:</p><ul id="11399b07-15e3-80df-bd59-ef18d6097f75" class="bulleted-list"><li style="list-style-type:disc"><span style="border-bottom:0.05em solid">regla 4</span>: una vez que un trabajo agota su tiempo de asignación, el trabajo baja de prioridad. no importa cuantas veces haya dejado la CPU.</li></ul><figure id="11399b07-15e3-8008-8c0a-eeb7b3c030d5" class="image"><a href="image%204.png"><img style="width:575px" src="image%204.png"/></a></figure><p id="11399b07-15e3-80b8-a286-d9ddb7cadeb2" class="">en el ejemplo de la izquierda, muestra lo que pasa con las reglas 4a y 4b. sin una protección contra el <mark class="highlight-red">gaming</mark>, el trabajo gris puede hacer una operación de I/O antes de que su tiempo de asiganción termine, y así quedar en la misma prioridad, y de paso quedarse con todo el tiempo de la CPU.</p><p id="11399b07-15e3-8014-a2d8-d65e62ba6499" class="">en el de la izquierda, con protección anti-<mark class="highlight-red">gaming</mark>, fuera de si el proceso es I/O, de a poco va bajando su prioridad, y así no monopoliza la CPU.</p><h2 id="11399b07-15e3-800a-924b-cbeb6e698337" class="">8.5: afinando <mark class="highlight-orange">mlfq</mark> y otros problemas</h2><hr id="11399b07-15e3-8099-b2b7-c8a1ac976785"/><p id="11399b07-15e3-8064-a710-f4a51d0bfe22" class="">varios problemas nuevos aparecen con el planificador <mark class="highlight-orange">mlfq</mark>, como cómo parametrizarlo. por ejemplo: cuantas colas deberían haber? cuanto debería ser el segmento de tiempo entre trabajos antes de cambiar de cola? cual debería ser el tiempo de asignación? que tan seguido debería haber un boost de prioridad? corte igual esto es re importante</p><p id="11399b07-15e3-8005-ab11-d9abc9800a73" class="">hay varios <mark class="highlight-orange">mlfq</mark> que varían su tiempo por cola:</p><p id="11399b07-15e3-8011-8983-facc196a7f9e" class="">las colas de mayor prioridad normalmente tienen un segmento de tiempo corto. como se asume que los nuevos trabajos son cortos e interactivos, entonces alternar rapido entre ellos tiene sentido.</p><p id="11399b07-15e3-8027-a127-f51cb8ee8b27" class="">las colas de menor prioridad contienen trabajos largos que son CPU-bound, entonces, segmentos de tiempo largos funcan bien.</p><figure id="11399b07-15e3-80aa-9d1d-d69d9870dad7" class="image"><a href="image%205.png"><img style="width:444px" src="image%205.png"/></a></figure><p id="11399b07-15e3-80c2-a8ab-f63f18a3c210" class="">este ejemplo muestra dos trabajos, en los cuales en Q2 se ejecutan por 20ms, con un segmento de tiempo de 10ms entre ellos.</p><p id="11399b07-15e3-800f-bd32-f096eb140cce" class="">en Q1 se ejecutan por 40ms, con un segmento de tiempo de 20ms,</p><p id="11399b07-15e3-80c7-886f-fc372a825abb" class="">y finalmente en Q0 tienen un segmento de tiempo de 40ms.</p><p id="11399b07-15e3-8034-9a52-eeaf92d7fb4a" class="">y bueno así hay una banda de <mark class="highlight-orange">mlfq</mark>s</p><p id="11399b07-15e3-80fd-8621-e0c86152f110" class="">hay varios que por ejemplo dejan en prioridad mayor a los trabajos del sistema operativo. otros permiten que el usuario modifique la prioridad de los trabajos (el libro dice que es raro), con el comando <code>nice</code></p><h2 id="11399b07-15e3-806a-b14a-c6ae8c2517ee" class="">8.6: resumen</h2><p id="11399b07-15e3-807a-93e4-d9c59a92ae7f" class="">entonces <mark class="highlight-orange">mlfq </mark>se llama así porque:</p><p id="11399b07-15e3-8072-8220-ed1ace45dda6" class=""><mark class="highlight-orange">multi-level</mark>: se conforma por varios niveles de prioridad (colas).</p><p id="11399b07-15e3-8071-98b3-fc5bf76efcdd" class=""><mark class="highlight-orange">feedback</mark>: aprende del comportamiento de los trabajos para tratarlos como debería; trabajo corto con I/O, prioridad alta. trabajo largo CPU-bound, prioridad baja.</p><p id="11399b07-15e3-80b2-8abe-e5a624ba74bd" class="">
+</p><p id="11399b07-15e3-8091-8545-ecb02584b8b1" class="">las reglas del <mark class="highlight-orange">mlfq </mark>terminan siendo estas:</p><ul id="11399b07-15e3-8009-aca3-c301def2ad62" class="bulleted-list"><li style="list-style-type:disc"><span style="border-bottom:0.05em solid">regla 1</span>: si priority(A) &gt; priority(B), A corre, B no.</li></ul><ul id="11399b07-15e3-8049-8e62-cf77b871b019" class="bulleted-list"><li style="list-style-type:disc"><span style="border-bottom:0.05em solid">regla 2</span>: si priority(A) = priority(B), A y B corren en rr.</li></ul><ul id="11399b07-15e3-8052-95a6-f3b0455f42aa" class="bulleted-list"><li style="list-style-type:disc"><span style="border-bottom:0.05em solid">regla 3</span>: cuando un trabajo llega al sistema, tiene la maxima prioridad.</li></ul><ul id="11399b07-15e3-80c9-8997-fa75128ec5a6" class="bulleted-list"><li style="list-style-type:disc"><span style="border-bottom:0.05em solid">regla 4</span>: una vez que un trabajo agota su tiempo de asignación, el trabajo baja de prioridad. no importa cuantas veces haya dejado la CPU.</li></ul><ul id="11399b07-15e3-80f4-9959-cba2615c387c" class="bulleted-list"><li style="list-style-type:disc"><span style="border-bottom:0.05em solid">regla 5</span>: despues de un periodo de tiempo S, mover todos los trabajos a la prioridad mas alta.</li></ul><p id="11399b07-15e3-8037-bd5e-d2764f104db7" class="">
+</p><p id="11399b07-15e3-8013-9d4a-f5b11965bbd5" class="">entonces <mark class="highlight-orange">mlfq</mark> es interesante porque aprende de los trabajos con el paso del tiempo. observa la ejecución de estos y los prioriza acorde a como se comportan.</p><p id="11399b07-15e3-80ee-b2f7-fe73eef22ce1" class="">de esta forma tiene buen rendimiento (como sjf/stcf) para trabajos cortos e interactivos, y es justo para trabajos largos CPU-bound.</p><p id="11399b07-15e3-8000-9cb5-ebec259a662a" class="">
+</p><p id="11399b07-15e3-8022-b246-e7f5b627537d" class="">FIN</p></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
